@@ -30,7 +30,7 @@ def write_fasta(fastalst, handle):
         handle.write('\n')
 
 
-sequences = list(SeqIO.parse(sys.argv[1], 'fasta'))[:10]
+sequences = list(SeqIO.parse(sys.argv[1], 'fasta'))
 
 for seq in range(len(sequences)):
     
