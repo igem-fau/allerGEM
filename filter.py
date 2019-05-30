@@ -51,7 +51,6 @@ for seq1 in range(len(allergens)):
 
     to_pop = list(dict.fromkeys(to_pop))
     to_pop = sorted(to_pop, reverse=True)
-    print(to_pop)
 
     for p in to_pop:
         nonallergens.pop(p)
