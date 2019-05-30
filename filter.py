@@ -1,15 +1,6 @@
 from Bio import SeqIO, pairwise2, AlignIO
 import sys
 
-helptxt = "Filters a .fasta file for protein sequences longer than 100 amino \
-acids and containing only standard amino acids, i.e. no \"X\".\nAdditionally \
-sequences that have a over 90% sequence identity will be deleted"
-
-if sys.argv[1] == '-h':
-    print(helptxt)
-    sys.exit()
-
-
 def seq_id(seq1, seq2):
     """Takes two sequences as input and calculates their similarity based on
     the alignment score divided by the alignment length
@@ -19,41 +10,58 @@ def seq_id(seq1, seq2):
     return alignment[-3] / alignment[-1]
 
 
-def write_fasta(fastalst, handle):
-    """Writes list(SeqIO) object to a file.
-    """
-    for seq in fastalst:
-        handle.write('>')
-        handle.write(seq.description)
-        handle.write('\n')
-        handle.write(str(seq.seq))
-        handle.write('\n')
+flags = ['-a', '-n', '-h']
+passed = [f for f in sys.argv if '-' in f]
 
+if len([i for i in passed if i not in flags]) > 0:
+    raise Exception("Unrecognized Flags")
 
-sequences = list(SeqIO.parse(sys.argv[1], 'fasta'))
+if '-h' in sys.argv:
+    print("Use -a to pass a .fasta file with allergens and -n with nonallergens")
+    sys.exit()
 
-for seq in range(len(sequences)):
-    
-    if len(sequences[seq].seq) < 100 and 'X' in sequences[seq].seq:
-        sequences.pop(seq)
+allergens = list(SeqIO.parse(sys.argv[sys.argv.index('-a')+1], 'fasta'))
 
-to_pop = []
-for seq1 in range(len(sequences)-1):
+for seq in range(len(allergens)):
 
-    for seq2 in range(seq1+1, len(sequences)):
-        identity = seq_id(sequences[seq1].seq, sequences[seq2].seq)
+    if len(allergens[seq].seq) < 100:
+        allergens.pop(seq)
+
+    if 'X' in allergens[seq].seq:
+        allergens.pop(seq)
+
+nonallergens = list(SeqIO.parse(sys.argv[sys.argv.index('-n')+1], 'fasta'))
+
+for seq in range(len(allergens)):
+
+    if len(allergens[seq].seq) < 100:
+        allergens.pop(seq)
+
+    if 'X' in allergens[seq].seq:
+        allergens.pop(seq)
+
+for seq1 in range(len(allergens)):
+    to_pop = []
+
+    for seq2 in range(len(nonallergens)):
+        identity = seq_id(allergens[seq1].seq, nonallergens[seq2].seq)
 
         if identity >= 0.9:
             to_pop.append(seq2)
 
-#Delete duplicates and sort the indexes in descending order so deleting them one
-#by one won't mess up the rest of the indices.
-to_pop = list(dict.fromkeys(to_pop))
-to_pop = sorted(to_pop, reverse=True)
+    to_pop = list(dict.fromkeys(to_pop))
+    to_pop = sorted(to_pop, reverse=True)
+    print(to_pop)
 
-for p in to_pop:
-    sequences.pop(p)
+    for p in to_pop:
+        nonallergens.pop(p)
 
 filtered = open("filtered.fasta", 'w')
-write_fasta(sequences, filtered)
+
+for seq in range(len(allergens)):
+    filtered.write(str(allergens[seq].seq)+";1\n")
+
+for seq in range(len(nonallergens)):
+    filtered.write(str(nonallergens[seq].seq)+";0\n")
+
 filtered.close()
