@@ -22,23 +22,19 @@ if '-h' in sys.argv:
 
 allergens = list(SeqIO.parse(sys.argv[sys.argv.index('-a')+1], 'fasta'))
 
-for seq in range(len(allergens)):
+allergens = [allergens[seq] for seq in range(len(allergens)) \
+        if len(allergens[seq].seq) > 100]
 
-    if len(allergens[seq].seq) < 100:
-        allergens.pop(seq)
-
-    if 'X' in allergens[seq].seq:
-        allergens.pop(seq)
+allergens = [allergens[seq] for seq in range(len(allergens)) \
+        if "X" not in allergens[seq].seq]
 
 nonallergens = list(SeqIO.parse(sys.argv[sys.argv.index('-n')+1], 'fasta'))
 
-for seq in range(len(allergens)):
+nonallergens = [nonallergens[seq] for seq in range(len(nonallergens)) \
+        if len(nonallergens[seq].seq) > 100]
 
-    if len(allergens[seq].seq) < 100:
-        allergens.pop(seq)
-
-    if 'X' in allergens[seq].seq:
-        allergens.pop(seq)
+nonallergens = [nonallergens[seq] for seq in range(len(nonallergens)) \
+        if "X" not in nonallergens[seq].seq]
 
 for seq1 in range(len(allergens)):
     to_pop = []
