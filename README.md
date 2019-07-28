@@ -1,1 +1,1 @@
-# protein-net
+# allergen-net
