@@ -3,7 +3,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>Allie</title>
+    <title>iGEM Erlangen - Allergen-Net</title>
 
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest"> </script>
 
@@ -14,13 +14,19 @@
 
     <div class="mx-auto container my-10 shadow-lg rounded-lg p-10">
         <textarea id="sequence" onchange="resetStatus()" onkeyup="resetStatus()" class="bg-gray-100 font-mono outline-none border-transparent w-full p-4 rounded-lg my-2 h-56"></textarea>
-        <div id="status" class="mt-4 float-left"></div>
+        <div id="status" class="mt-3 float-left"></div>
         <button class="float-right outline-none bg-gray-500 mt-2 py-2 px-4 rounded-full text-white hover:bg-gray-600" onclick="makePrediction()" >Predict</button>
 
         <!-- Template for the result -->
         <div class="hidden">
-            <div id="allergen" class="text-red-600 font-bold">Allergen</div>
-            <div id="non-allergen" class="text-green-600 font-bold">No allergen</div>
+            <div id="allergen" class="text-red-600">
+                <div class="font-bold">Allergen</div>
+                <div class="text-sm">Certainty: {certainty} %</div>
+            </div>
+            <div id="non-allergen" class="text-green-600">
+                <div class="font-bold">No allergen</div>
+                <div class="text-sm">Certainty: {certainty} %</div>
+            </div>
             <div id="crunching" class="text-blue-600 font-bold">Crunching numbers ...</div>
             <div id="error"></div>
         </div>
@@ -47,12 +53,18 @@
     function markAllergenStatus(allergenity) {
         var status = document.getElementById("status");
 
-        if (allergenity > 0.5) {
+        var thresh = 0.5;
+
+        if (allergenity > thresh) {
+            var c = (allergenity - thresh) / (1-thresh);
+
             var a = document.getElementById("allergen").outerHTML;
-            status.innerHTML = a.replace("{allergenity}", allergenity);
+            status.innerHTML = a.replace("{allergenity}", allergenity).replace("{certainty}", (c * 100).toFixed(1));
         } else {
+            var c = 1 - allergenity / thresh;
+
             var a = document.getElementById("non-allergen").outerHTML;
-            status.innerHTML = a.replace("{allergenity}", allergenity);
+            status.innerHTML = a.replace("{allergenity}", allergenity).replace("{certainty}", (c * 100).toFixed(1));
         }
     }
 
@@ -66,7 +78,7 @@
         markCalculating();
 
         // Load model and encode sequence
-        var model = await tf.loadLayersModel('https://igemmeetup.com/allergen-net/model.json');
+        var model = await tf.loadLayersModel('model.json');
         var oh = tf.tensor([onehot(sequence)]);
 
         // Predict
