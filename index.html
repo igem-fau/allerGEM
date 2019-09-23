@@ -1,0 +1,127 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Allie</title>
+
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest"> </script>
+
+    <link href="https://unpkg.com/tailwindcss@^1.0/dist/tailwind.min.css" rel="stylesheet">
+
+</head>
+<body>
+
+    <div class="mx-auto container my-10 shadow-lg rounded-lg p-10">
+        <textarea id="sequence" onchange="resetStatus()" onkeyup="resetStatus()" class="bg-gray-100 font-mono outline-none border-transparent w-full p-4 rounded-lg my-2 h-56"></textarea>
+        <div id="status" class="mt-4 float-left"></div>
+        <button class="float-right outline-none bg-gray-500 mt-2 py-2 px-4 rounded-full text-white hover:bg-gray-600" onclick="makePrediction()" >Predict</button>
+
+        <!-- Template for the result -->
+        <div class="hidden">
+            <div id="allergen" class="text-red-600 font-bold">Allergen</div>
+            <div id="non-allergen" class="text-green-600 font-bold">No allergen</div>
+            <div id="crunching" class="text-blue-600 font-bold">Crunching numbers ...</div>
+            <div id="error"></div>
+        </div>
+
+        <div class="clearfix"></div>
+    </div>
+
+    <script>
+    function resetStatus() {
+        var status = document.getElementById("status");
+        status.textContent = "";
+
+        var sequence = document.getElementById("sequence").value;
+        sequence = sequence.toUpperCase().replace(/(\n|\r\s\t)/g, '');
+        document.getElementById("sequence").value = sequence;
+    }
+
+    function markCalculating() {
+        var status = document.getElementById("status");
+        var a = document.getElementById("crunching").outerHTML;
+        status.innerHTML = a;
+    }
+
+    function markAllergenStatus(allergenity) {
+        var status = document.getElementById("status");
+
+        if (allergenity > 0.5) {
+            var a = document.getElementById("allergen").outerHTML;
+            status.innerHTML = a.replace("{allergenity}", allergenity);
+        } else {
+            var a = document.getElementById("non-allergen").outerHTML;
+            status.innerHTML = a.replace("{allergenity}", allergenity);
+        }
+    }
+
+    function showError(msg) {
+        var status = document.getElementById("status");
+        status.textContent = "Error: " + msg;
+    }
+
+    async function predict(sequence) {
+        // Forget the previous result
+        markCalculating();
+
+        // Load model and encode sequence
+        var model = await tf.loadLayersModel('model.json');
+        var oh = tf.tensor([onehot(sequence)]);
+
+        // Predict
+        var result = model.predict(oh).dataSync();
+
+        // Return result
+        return result;
+    }        
+
+    function makePrediction() {
+        var sequence = document.getElementById("sequence").value;
+        sequence = sequence.toUpperCase().replace(/(\n|\r\s\t)/g, '');
+
+        // TODO: Preprocess sequence
+        for (var i=0; i<sequence.length; ++i) {
+            if (aa1.indexOf(sequence[i]) < 0) {
+                showError("Invalid protein sequence");
+                return;
+            }
+        }
+
+        // Make the prediction
+        predict(sequence).then(markAllergenStatus);
+    }
+
+    var longest = 16384;
+
+    // Make the map for the one hot coding
+    var aa1 = ["A", "C", "D", "E", "F", "G", "H", "I", "K", "L", "M", "N", "P", "Q", "R", "S", "T", "V", "W", "Y"];
+    var aa2int = {};
+    for (var i=0; i<aa1.length; ++i) {
+        aa2int[aa1[i]] = i;
+    }
+
+    // One hot coding
+    function onehot(seq) {
+        var oh = [];
+        for (var i=0; i<longest; ++i) {
+            var x = [];
+            for (var j=0; j<20; ++j) {
+                x.push(0);
+            }
+            oh.push(x);
+        }
+
+        for (var i=0; i<seq.length; ++i) {
+            oh[i][aa2int[seq[i]]] = 1;
+        }
+
+        return oh;
+    }
+
+    // TODO: Also allow DNA sequences
+
+    </script>
+    
+</body>
+</html>
