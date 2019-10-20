@@ -1,4 +1,4 @@
-# allergen-net
+# allerGEM
 
 allergen-net allows to predict if a protein sequence is an allergen. The project is created as part of
 the annual iGEM competition 2019 by the team of the Friedrich-Alexander-University Erlangen-Nuremberg.
